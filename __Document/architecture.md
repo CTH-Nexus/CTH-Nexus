@@ -11,8 +11,6 @@ title: __Document\architecture.md
 
 ```
 .
-├── .github
-│   └── README.md
 ├── .script
 │   └── README.md
 │
