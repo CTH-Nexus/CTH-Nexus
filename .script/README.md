@@ -49,7 +49,7 @@ Executing the following command will open File Explorer.
 a repository will be created on the shared folder (`R:\`) based on that list.
 
 ```powershell
-subst R: "\\path\\to\\your\\remote\\repository"
+# net use R: "\\path\\to\\your\\remote\\repository"
 powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Create-BareRepos.ps1"
 ```
 
@@ -61,8 +61,8 @@ powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotT
 
 ## Output (sample)
 
-```shell
-subst R: "\\path\\to\\your\\remote\\repository"
+```powershell
+# net use R: "\\path\\to\\your\\remote\\repository"
 powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Create-BareRepos.ps1"
 --- Bare Repository Creator Script (R:\ Drive) ---
 ✅ ID List File: C:\Users\ningensei848\Downloads\temp\id_list.txt
