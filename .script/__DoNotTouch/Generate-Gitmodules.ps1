@@ -65,6 +65,8 @@ function Select-SubmoduleParentDirectory {
         }
 
         # Clean up the path: remove './' and convert backslashes to forward slashes (Git standard)
+        # Note: If the root is selected, Resolve-Path returns '.' or nothing. 
+        # TrimStart('./') handles this, resulting in an empty string "" for the root.
         return $RelativePath.TrimStart('./').Replace('\', '/')
     }
     return $null
@@ -110,7 +112,8 @@ if (Test-Path $OutputFile) {
             # Find lines that match 'path = ...'
             if ($line -match '^\s*path\s*=\s*(.+)$') {
                 # Add the extracted path to the HashSet for duplicate checking
-                $ExistingPaths.Add($matches[1].Trim())
+                # Also trim any stray leading slashes found in the file
+                $ExistingPaths.Add($matches[1].Trim().TrimStart('/'))
             }
         }
         Write-Host "Found $($ExistingPaths.Count) existing submodule paths." -ForegroundColor Gray
@@ -134,8 +137,11 @@ foreach ($ID in $IDs) {
     # Remove leading/trailing spaces from the ID
     $CleanID = $ID.Trim()
 
-    # Submodule Path (Git prefers forward slashes)
-    $Path = "$SubmoduleParentDir/$CleanID"
+    # 1. Use Join-Path to robustly join the path. This correctly handles cases
+    #    where $SubmoduleParentDir is empty (root selected).
+    # 2. Convert to forward slashes for Git.
+    # 3. Force-remove any leading slash (TrimStart('/')) as a final safeguard.
+    $Path = (Join-Path $SubmoduleParentDir $CleanID).Replace('\', '/').TrimStart('/')
 
     # Check if this path is already in the file
     if ($ExistingPaths.Contains($Path)) {
@@ -146,7 +152,7 @@ foreach ($ID in $IDs) {
         Write-Host "  [ADD] $Path" -ForegroundColor Green
         
         # Build the new content block
-        $URL = "${BaseDriveLetter}:$Path.git" # Using your specific URL format
+        $URL = "${BaseDriveLetter}:/$Path.git" # Using your specific URL format
         
         $NewEntry = @(
             "", # Start with a blank line for separation
