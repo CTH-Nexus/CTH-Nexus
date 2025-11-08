@@ -1,6 +1,7 @@
 ﻿# ==============================================================================
-# Gitmodules File Generator Script (PowerShell) - Final Version (GUI Path Selection)
+# Gitmodules File Generator Script (PowerShell) - Final Version (Append Mode)
 # Uses Windows Forms for file and folder selection and assumes R: drive is mounted.
+# Checks for duplicates and appends new entries to .gitmodules.
 # ==============================================================================
 
 # Load Windows Forms assembly for GUI dialogs
@@ -17,7 +18,7 @@ $BaseDriveLetter = "R"
 # --- 1. Function to select the ID list file via dialog ---
 function Select-IdListFile {
     $Dialog = New-Object System.Windows.Forms.OpenFileDialog
-    $Dialog.InitialDirectory = Get-Location  # 現在のディレクトリを初期表示
+    $Dialog.InitialDirectory = Get-Location  # Set initial directory to current path
     $Dialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
     $Dialog.Title = "STEP 1/3: Select the Member ID list file (one ID per line)"
 
@@ -42,7 +43,7 @@ function Select-SubmoduleParentDirectory {
     # 32: Title
     # 16: Options (e.g., BIF_RETURNONLYFSDIRS)
     # $InitialFolder.Path: Root folder
-    $Folder = $Shell.BrowseForFolder(0, "STEP 2/3: Select the parent directory where submodules will be placed (e.g., 'members')", 16, $InitialFolder.Path)
+    $Folder = $Shell.BrowseForFolder(0, "STEP 2/3: Select the parent directory where submodules will be placed (e.g., 'Member/')", 16, $InitialFolder.Path)
 
     # Release the Shell object to prevent resource leak
     [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Shell) | Out-Null
@@ -90,15 +91,45 @@ if (-not $SubmoduleParentDir) {
 }
 Write-Host "✅ Submodule Parent Path (Relative): $SubmoduleParentDir" -ForegroundColor Green
 
-
 # Read IDs
 $IDs = Get-Content $IDListPath | Where-Object { $_ -match '\S' } # Exclude empty lines
 Write-Host "STEP 3/3: Number of IDs to process: $($IDs.Count)" -ForegroundColor Cyan
 
 
-# Generate .gitmodules content
-$GitmodulesContent = @()
+# --- ⭐ MODIFIED SECTION: Read existing paths and append new entries ---
 
+$OutputFile = ".\.gitmodules"
+$ExistingPaths = New-Object System.Collections.Generic.HashSet[string]
+
+# 1. Read existing .gitmodules if it exists
+if (Test-Path $OutputFile) {
+    Write-Host "Reading existing .gitmodules file..."
+    try {
+        $ExistingContent = Get-Content $OutputFile
+        foreach ($line in $ExistingContent) {
+            # Find lines that match 'path = ...'
+            if ($line -match '^\s*path\s*=\s*(.+)$') {
+                # Add the extracted path to the HashSet for duplicate checking
+                $ExistingPaths.Add($matches[1].Trim())
+            }
+        }
+        Write-Host "Found $($ExistingPaths.Count) existing submodule paths." -ForegroundColor Gray
+    }
+    catch {
+        Write-Host "❌ ERROR: Failed to read existing .gitmodules file. Check permissions." -ForegroundColor Red
+        Read-Host "Press Enter to close the window."
+        exit
+    }
+} else {
+    Write-Host "No existing .gitmodules file found. A new one will be created."
+}
+
+$AddCount = 0
+$SkipCount = 0
+
+Write-Host "Processing IDs and appending new submodules..."
+
+# 2. Loop through IDs, check for duplicates, and append
 foreach ($ID in $IDs) {
     # Remove leading/trailing spaces from the ID
     $CleanID = $ID.Trim()
@@ -106,28 +137,52 @@ foreach ($ID in $IDs) {
     # Submodule Path (Git prefers forward slashes)
     $Path = "$SubmoduleParentDir/$CleanID"
 
-    # Submodule URL (Native Windows path format: R:/<ID>.git)
-    # Using {} to safely enclose the variable and avoid InvalidVariableReferenceWithDrive error.
-    $URL = "${BaseDriveLetter}:/$CleanID.git"
-
-    $GitmodulesContent += "[submodule `"$Path`"]"
-    $GitmodulesContent += "	path = $Path"
-    $GitmodulesContent += "	url = $URL"
-    $GitmodulesContent += "`n" # Add an empty line between entries
+    # Check if this path is already in the file
+    if ($ExistingPaths.Contains($Path)) {
+        Write-Host "  [SKIP] $Path already exists." -ForegroundColor Yellow
+        $SkipCount++
+    } else {
+        # This is a new entry, append it
+        Write-Host "  [ADD] $Path" -ForegroundColor Green
+        
+        # Build the new content block
+        $URL = "${BaseDriveLetter}:$Path.git" # Using your specific URL format
+        
+        $NewEntry = @(
+            "", # Start with a blank line for separation
+            "[submodule `"$Path`"]",
+            "	path = $Path",
+            "	url = $URL"
+        )
+        
+        # Append this block to the file
+        try {
+            $NewEntry | Add-Content -Path $OutputFile -Encoding UTF8
+        }
+        catch {
+             Write-Host "❌ ERROR: Failed to write to .gitmodules. Check permissions." -ForegroundColor Red
+             Read-Host "Press Enter to close the window."
+             exit
+        }
+        
+        # Also add to the HashSet so we don't add duplicates *from the ID list itself*
+        $ExistingPaths.Add($Path) 
+        $AddCount++
+    }
 }
+# --- ⭐ END OF MODIFIED SECTION ---
 
 
-# Output file
-$OutputFile = ".\.gitmodules"
-$GitmodulesContent | Out-File $OutputFile -Encoding UTF8
-
+# 3. Final Summary Report
 Write-Host "`n=========================================================" -ForegroundColor Green
 Write-Host "🎉 .gitmodules generation complete!" -ForegroundColor Green
-Write-Host "Output file: $OutputFile" -ForegroundColor Green
+Write-Host "Output file: $OutputFile"
+Write-Host " - Added: $AddCount new submodules." -ForegroundColor Green
+Write-Host " - Skipped: $SkipCount duplicate submodules." -ForegroundColor Yellow
 Write-Host "`n⚠️ IMPORTANT: Verify R: drive has all required '{USER_ID}.git' bare repos and is currently mounted." -ForegroundColor Yellow
-Write-Host "`nCommit the generated file and then run the following command to fetch submodules:" -ForegroundColor Cyan
+Write-Host "`nCommit the changes and then run the following command to fetch submodules:" -ForegroundColor Cyan
 Write-Host "`n  git add .gitmodules" -ForegroundColor Cyan
-Write-Host "  git commit -m 'Add $($IDs.Count) member submodules'" -ForegroundColor Cyan
+Write-Host "  git commit -m 'Add $AddCount new member submodules'" -ForegroundColor Cyan
 Write-Host "  git submodule update --init --recursive" -ForegroundColor Cyan
 Write-Host "`n=========================================================" -ForegroundColor Green
 

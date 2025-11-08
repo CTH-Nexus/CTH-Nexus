@@ -53,13 +53,13 @@ a repository will be created on the shared folder (`R:\`) based on that list.
 powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Create-BareRepos.ps1"
 ```
 
-## Input (sample)
+### Input (sample)
 
 ```plaintext
 {USER_ID}
 ```
 
-## Output (sample)
+### Output (sample)
 
 ```powershell
 # net use R: "\\path\\to\\your\\remote\\repository"
