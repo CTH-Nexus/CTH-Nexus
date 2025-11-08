@@ -4,6 +4,6 @@ tags:
 title: Welcome
 ---
 
-# neXus: Imagine the **_New_** ~~Future~~ for **_US_**
+# Knewrova[ult]: Connecting _knewledge_, moving **beyond**
 
-~~未来~~を想え
+知識を繋ぐ、越えていく
