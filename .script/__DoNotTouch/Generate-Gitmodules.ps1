@@ -65,7 +65,7 @@ function Select-SubmoduleParentDirectory {
         }
 
         # Clean up the path: remove './' and convert backslashes to forward slashes (Git standard)
-        # Note: If the root is selected, Resolve-Path returns '.' or nothing. 
+        # Note: If the root is selected, Resolve-Path returns '.' or nothing.
         # TrimStart('./') handles this, resulting in an empty string "" for the root.
         return $RelativePath.TrimStart('./').Replace('\', '/')
     }
@@ -150,17 +150,17 @@ foreach ($ID in $IDs) {
     } else {
         # This is a new entry, append it
         Write-Host "  [ADD] $Path" -ForegroundColor Green
-        
+
         # Build the new content block
         $URL = "${BaseDriveLetter}:/$Path.git" # Using your specific URL format
-        
+
         $NewEntry = @(
             "", # Start with a blank line for separation
             "[submodule `"$Path`"]",
             "	path = $Path",
             "	url = $URL"
         )
-        
+
         # Append this block to the file
         try {
             $NewEntry | Add-Content -Path $OutputFile -Encoding UTF8
@@ -170,9 +170,9 @@ foreach ($ID in $IDs) {
              Read-Host "Press Enter to close the window."
              exit
         }
-        
+
         # Also add to the HashSet so we don't add duplicates *from the ID list itself*
-        $ExistingPaths.Add($Path) 
+        $ExistingPaths.Add($Path)
         $AddCount++
     }
 }

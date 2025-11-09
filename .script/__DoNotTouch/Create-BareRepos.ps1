@@ -12,7 +12,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 # --- [CRITICAL] Base Drive Letter for SMB Share ---
 # Adjust this to the drive letter mounted via 'net use' (e.g., 'R').
-$BaseDriveLetter = "R" 
+$BaseDriveLetter = "R"
 # -----------------------------------------------
 
 # --- 1. Function to select the ID list file via dialog ---
@@ -21,7 +21,7 @@ function Select-IdListFile {
     $Dialog.InitialDirectory = Get-Location
     $Dialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
     $Dialog.Title = "STEP 1/3: Select the Member ID list file (one ID per line)"
-    
+
     if ($Dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         return $Dialog.FileName
     }
@@ -30,19 +30,19 @@ function Select-IdListFile {
 
 # --- 2. Function to select the target base directory via dialog ---
 function Select-TargetBaseDirectory {
-    
+
     # Check if the target drive is mounted
     if (-not (Test-Path "${BaseDriveLetter}:/")) {
         Write-Host "❌ FATAL ERROR: Target drive letter '${BaseDriveLetter}' is not mounted." -ForegroundColor Red
         return $null
     }
-    
+
     # Use stable Shell.Application COM object for folder selection
     $Shell = New-Object -ComObject Shell.Application
-    
+
     # Set the R: drive root as the initial folder
     $InitialFolder = "${BaseDriveLetter}:\"
-    
+
     # Create the folder browser dialog
     $Title = "STEP 2/3: Select the base directory on R: drive for bare repositories (e.g., R:\USERS_REPOS)"
     # 16 is BIF_RETURNONLYFSDIRS
@@ -50,17 +50,17 @@ function Select-TargetBaseDirectory {
 
     # Release the Shell object to prevent resource leak
     [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Shell) | Out-Null
-    
+
     # Check if the user selected a folder (did not press 'Cancel')
     if ($Folder -ne $null) {
         $SelectedPath = $Folder.Self.Path
-        
+
         # Verify selection is on the target drive
         if (-not ($SelectedPath -like "${BaseDriveLetter}:*")) {
              Write-Host "❌ ERROR: Selected folder must be on the target drive '${BaseDriveLetter}:'." -ForegroundColor Red
              return $null
         }
-        
+
         # Convert path to Git/PowerShell friendly format (R:/path/to/folder)
         return $SelectedPath.Replace('\', '/')
     }
@@ -120,9 +120,9 @@ $FailureCount = 0
 
 foreach ($ID in $IDs) {
     ${CleanID} = $ID.Trim()
-    
+
     # Path to the bare repo on R: drive
-    $RepoPath = (Join-Path $TargetBasePath "${CleanID}.git").Replace('\', '/') 
+    $RepoPath = (Join-Path $TargetBasePath "${CleanID}.git").Replace('\', '/')
     # Path for the temporary local clone
     $TempClonePath = Join-Path $TempDirectory ${CleanID}
 
@@ -166,7 +166,7 @@ foreach ($ID in $IDs) {
         New-Item -ItemType File -Path "Daily\.keep" -Value "" | Out-Null
         New-Item -ItemType Directory -Path "Misc" | Out-Null
         New-Item -ItemType File -Path "Misc\.keep" -Value "" | Out-Null
-        
+
         Write-Host " Done." -ForegroundColor Green
 
         # 4. Add, commit, and push the initial commit
@@ -179,7 +179,7 @@ foreach ($ID in $IDs) {
 
         # 5. Return to the original directory
         Set-Location $ParentRepoRoot
-        
+
         Write-Host "  [5/5] Successfully initialized ${CleanID}." -ForegroundColor Green
         $SuccessCount++
     }
