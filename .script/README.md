@@ -106,3 +106,39 @@ powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotT
 ### Output
 
 Create `R:\UsersVault\{USER_ID}.git` (initialized) on the shared folder.
+
+## `Fix-Submodules.ps1`
+
+`.gitmodules` を含むリポジトリを clone する際に `--recurse-submodules` をつけなかった場合、なんか意図しない挙動になる
+
+これを避けるため、改めて `--force` をつけて `git submodule add` する
+
+ただし、`Member/`配下には自分のものだけを置く想定であるため、スクリプトの例外処理はせず、自身でコマンドを実行する
+
+```shell
+git submodule add --force "R:\Member\{USER_ID}.git" "Member/{USER_ID}"
+```
+
+### Usage
+
+```powershell
+# net use R: "\\path\\to\\your\\remote\\repository"
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Fix-Submodules.ps1"
+```
+
+### Input (sample)
+
+```ini
+[submodule "Shared/User/{USER_ID}"]
+	path = Shared/User/{USER_ID}
+	url = R:/Shared/User/{USER_ID}.git
+
+# Member 以下の記述はすべて無視される
+[submodule "Member/{USER_ID}"]
+	path = Member/{USER_ID}
+	url = R:/Member/{USER_ID}.git
+```
+
+### Output
+
+gitlink が生成され、サブモジュールとして追跡できるようになる
