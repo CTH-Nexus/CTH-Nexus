@@ -10,6 +10,7 @@ Convenient Scripts (For Developers)
 
 - `Generate-Gitmodules.ps1`
 - `Create-BareRepos.ps1`
+- `Setup-UserSparseCheckout.ps1`
 
 ## `Generate-Gitmodules.ps1`
 
@@ -79,3 +80,29 @@ Failed/Skipped: 0
 =========================================================
 Press Enter to close the window.:
 ```
+
+## `Setup-UserSparseCheckout.ps1`
+
+This script pushes this repository,
+after it has been customized for personal use, initialized, and built, to the shared folder.
+
+Executing the following command will open File Explorer.
+**Once** you select the ID list,
+a repository will be created on the shared folder (`R:\UsersVault`) based on that list.
+
+### Usage
+
+```powershell
+# net use R: "\\path\\to\\your\\remote\\repository"
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Setup-UserSparseCheckout.ps1"
+```
+
+### Input (sample)
+
+```plaintext
+{USER_ID}
+```
+
+### Output
+
+Create `R:\UsersVault\{USER_ID}.git` (initialized) on the shared folder.
