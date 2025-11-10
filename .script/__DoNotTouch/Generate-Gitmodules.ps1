@@ -152,7 +152,7 @@ foreach ($ID in $IDs) {
         Write-Host "  [ADD] $Path" -ForegroundColor Green
 
         # Build the new content block
-        $URL = "${BaseDriveLetter}:/$Path.git" # Using your specific URL format
+        $URL = "${BaseDriveLetter}:/Submodule/$Path.git" # Using your specific URL format
 
         $NewEntry = @(
             "", # Start with a blank line for separation

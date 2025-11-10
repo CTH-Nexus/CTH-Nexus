@@ -185,11 +185,25 @@ try {
     $totalUsers = $UserIDs.Count
     $currentUserIndex = 0
 
+    Add-Type -AssemblyName System.Windows.Forms
+
+    # --- Select Source Repo Path via Explorer ---
+    $folderDialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $folderDialog.Description = "ソースリポジトリのフォルダを選択してください（例：R:\Knewrova.git）"
+    $folderDialog.ShowNewFolderButton = $false
+
+    $dialogResult = $folderDialog.ShowDialog()
+    if ($dialogResult -ne [System.Windows.Forms.DialogResult]::OK) {
+        Write-Warning "ソースリポジトリの選択がキャンセルされました。処理を中止します。"
+        return
+    }
+    $SourceRepoPath = $folderDialog.SelectedPath
+
     foreach ($UserID in $UserIDs) {
         $currentUserIndex++
         $UserStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         $UserWorkDir = Join-Path $WorkBaseDir $UserID
-        $SourceRepoPath = "R:\Knewrova.git" # Path to the main monorepo
+        # $SourceRepoPath = "R:\Knewrova.git" # Path to the main monorepo
         $TargetBareRepoPath = "R:\UsersVault\$($UserID).git" # Path to the user's bare repo
 
         Write-Host "------------------------------------------------------------"
@@ -398,11 +412,11 @@ try {
     $ScriptStopwatch.Stop()
     Write-Host "------------------------------------------------------------"
     if ($ManualStop) {
-        Write-Warning -ForegroundColor DarkRed "SCRIPT EXECUTION WAS MANUALLY STOPPED."
+        Write-Warning "SCRIPT EXECUTION WAS MANUALLY STOPPED."
     } elseif ($GlobalSuccess) {
         Write-Host -ForegroundColor DarkGreen "SCRIPT COMPLETED SUCCESSFULLY."
     } else {
-        Write-Warning -ForegroundColor DarkYellow "SCRIPT COMPLETED WITH ONE OR MORE ERRORS."
+        Write-Warning "SCRIPT COMPLETED WITH ONE OR MORE ERRORS."
     }
     Write-Host "Total execution time: $($ScriptStopwatch.Elapsed.TotalSeconds) seconds."
     Write-Host "------------------------------------------------------------"

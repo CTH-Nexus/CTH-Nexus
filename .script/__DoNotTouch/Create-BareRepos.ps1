@@ -97,6 +97,17 @@ if (-not $TargetBasePath) {
 }
 Write-Host "✅ STEP 2: Target Base Path: $TargetBasePath" -ForegroundColor Green
 
+# --- Branch condition flag ---
+# (Check if the folder selected in STEP2 starts with 'Member')
+# Note: Since the path was previously converted to '/',
+#       revert to '\' before using GetFileName to extract the leaf name
+$SelectedFolderName = [System.IO.Path]::GetFileName($TargetBasePath.Replace('/', '\'))
+$CreateStandardDirs = $SelectedFolderName.StartsWith('Member', [System.StringComparison]::OrdinalIgnoreCase)
+
+# Log for visual confirmation (gray)
+Write-Host ("Rule Check: Base folder '{0}' => Create Daily/Misc = {1}" -f $SelectedFolderName, $CreateStandardDirs) -ForegroundColor Gray
+
+
 # Read IDs
 $IDs = Get-Content $IDListPath | Where-Object { $_ -match '\S' } # Exclude empty lines
 Write-Host "STEP 3/3: Number of bare repos to create: $($IDs.Count)" -ForegroundColor Cyan
@@ -161,18 +172,29 @@ foreach ($ID in $IDs) {
             Copy-Item $SourceGitAttributes -Destination .
         }
 
-        # Create directories with .keep files (so Git tracks them)
-        New-Item -ItemType Directory -Path "Daily" | Out-Null
-        New-Item -ItemType File -Path "Daily\.keep" -Value "" | Out-Null
-        New-Item -ItemType Directory -Path "Misc" | Out-Null
-        New-Item -ItemType File -Path "Misc\.keep" -Value "" | Out-Null
+        # Create directories with .keep files (only if STEP2 base folder starts with 'Member')
+        if ($CreateStandardDirs) {
+            New-Item -ItemType Directory -Path "Daily" -ErrorAction Stop | Out-Null
+            New-Item -ItemType File -Path "Daily\.keep" -Value "" -ErrorAction Stop | Out-Null
+            New-Item -ItemType Directory -Path "Misc" -ErrorAction Stop | Out-Null
+            New-Item -ItemType File -Path "Misc\.keep" -Value "" -ErrorAction Stop | Out-Null
+            Write-Host "    [INFO] Created standard directories (Daily, Misc) based on 'Member*' rule." -ForegroundColor Green
+        } else {
+            Write-Host "    [INFO] Skipped standard directories (Daily, Misc) because base path does not start with 'Member'." -ForegroundColor Yellow
+        }
 
         Write-Host " Done." -ForegroundColor Green
 
         # 4. Add, commit, and push the initial commit
         Write-Host "  [4/5] Committing and pushing initial state..." -NoNewline
         git add . 3>&1 4>&1 | Out-Null
-        git commit -m "Initial commit: Add standard files and directories" 3>&1 4>&1 | Out-Null
+
+        $CommitMessage = if ($CreateStandardDirs) {
+            "Initial commit: Add standard files and directories (Daily, Misc)"
+        } else {
+            "Initial commit: Add standard files only"
+        }
+        git commit -m $CommitMessage 3>&1 4>&1 | Out-Null
         # Push to the bare repo on R: drive
         git push -u origin main 3>&1 4>&1 | Out-Null
         Write-Host " Done." -ForegroundColor Green

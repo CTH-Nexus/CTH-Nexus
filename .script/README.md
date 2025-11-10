@@ -11,6 +11,7 @@ Convenient Scripts (For Developers)
 - `Generate-Gitmodules.ps1`
 - `Create-BareRepos.ps1`
 - `Setup-UserSparseCheckout.ps1`
+- `Fix-Submodules.ps1`
 
 ## `Generate-Gitmodules.ps1`
 
@@ -119,6 +120,8 @@ Create `R:\UsersVault\{USER_ID}.git` (initialized) on the shared folder.
 git submodule add --force "R:\Member\{USER_ID}.git" "Member/{USER_ID}"
 ```
 
+... 本当なら `git submodule update --init --recursive` でどうにかなるはずなのだが、なぜか動かないためこのようにする必要がある
+
 ### Usage
 
 ```powershell
@@ -142,3 +145,9 @@ powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotT
 ### Output
 
 gitlink が生成され、サブモジュールとして追跡できるようになる
+
+自分だけが管理する `Member/{USER_ID}` については、自身でコマンドを実行させる
+
+```
+git submodule add --force R:\Submodule\Member\{USER_ID} Member/{USER_ID}
+```
