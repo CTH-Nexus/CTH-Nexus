@@ -23,6 +23,9 @@ The following commands should be executed after **cloning** this repository to y
 > so separate transport via USB or similar media may be required.
 
 ```powershell
+git init
+git add .
+git commit -m "Initial Commit !!"
 git remote add origin R:\Knewrova.git
 git push origin main
 ```
@@ -30,43 +33,44 @@ git push origin main
 ## サブモジュールの作成・登録
 
 clone できただけでは使えない
+
 `Member/{USER_ID}/` および `Shared/User/{USER_ID}/` に各人の Vault を削り出すリポジトリを確保する必要がある
 
-ID リストを用意し、それをもとに「共有フォルダ上のベアリポジトリ群」および「それを登録した結果得られる `.gitmodules`」を自動作成できるスクリプトを用意したので利用されたい。
+ID リストを用意し、それをもとに「共有フォルダ上のベアリポジトリ群」および「それを登録した結果得られる `.gitmodules`」を自動作成できるスクリプトを用意したので利用されたい
+ただし、共有フォルダ上にサブモジュールのリポジトリを保持するディレクトリとして `R:\Submodule\Member` および `R:\Submodule\Shared\User` (必要なら `R:\Submodule\Shared\Project`)を、事前に手作業で作成しておく必要がある
 
-## 個人用リポジトリの配布
+### `Generate-Gitmodules.ps1`
 
-これも上記とはまた別に、各人が利用する `UsersVault/{USER_ID}/` というリポジトリを用意する必要がある
-ほとんど親リポジトリである `Knewrova` と同じだが、`git sparse-checkout` することで、自分に関係ある範囲のみを選べる
+IDリストからサブディレクトリ `Member/` および `Shared/User/` を選択することで、その配下に配置されるサブモジュール群を共有フォルダ上に作成する
 
-```powershell
-git clone --no-checkout R:\Knewrova.git "${USER_ID}"
-cd ${USER_ID}
-git sparse-checkout init --cone
+本来は `git submodule add` の結果生成されるファイルだが、IDの人数分コマンドを直列実行するのは時間がもったいない
 
-git sparse-checkout set `
-.gitignore `
-.gitattributes `
-.gitmodules `
-LICENSE `
-.script/ `
-Member/{USER_ID} `
-Shared/Project/{USER_ID} `
-Shared/User/{USER_ID} `
-__Attachment/ `
-__Document/ `
-__Template/
+### `Create-BareRepos.ps1`
 
-git checkout main
+IDリストから共有フォルダ上のディレクトリを選択することで、その配下にベアリポジトリ群を作成する
 
-git remote rename origin upstream
-git remote set-url --push upstream "R:\UsersVault\${USER_ID}.git"
-git remote add origin "R:\UsersVault\${USER_ID}.git"
-git branch main --set-upstream-to=origin/main
-git remote -v
+対象ディレクトリが `Member` であった場合のみ、直下に `Daily` と `Misc` が作成される
 
-# origin  R:\UsersVault\${USER_ID}.git (fetch)
-# origin  R:\UsersVault\${USER_ID}.git (push)
-# upstream        R:\Knewrova.git (fetch)
-# upstream        R:\UsersVault\${USER_ID}.git (push)
-```
+### `Setup-UserSparseCheckout.ps1`
+
+ここで再度、共有フォルダ上に `R:\UsersVault` を作成する必要がある
+
+これは、組織リポジトリを sparse-checkout してきたもので、組織リポジトリとの違いは「`Member` 以下のサブモジュール群をチェックアウトしない」ことである
+
+自分の分だけ sparse-checkout すれば、他メンバーの個人メモを同期することなく、`Shared` 以下だけを参照できる
+
+また、upstream こそ 組織リポジトリとして設定されるが、そこに Push できないようになっているため、好きなように自分好みにカスタマイズできる
+
+Vault内部のファイルパス形式については、絶対パスで固定のこと
+
+### `Fix-Submodules.ps1`
+
+本来であれば、clone したあとにサブモジュール追従をやるには `git submodule update --init recursive` とすればよいはずが、なぜか動かない
+
+そのため workaround として、`.gitmodule` を正しいものと仮定して `--force` をつけて再度強制実行する
+
+こうすることで、`.git` 内部の GitLink なる領域が活性化(?)して、サブモジュールとして認識した上に実体ファイルが降ってくるようになる
+
+---
+
+まぁ、個人リポジトリを clone する際に `--recurse-submodule` を忘れなければいいだけの話なのだが
