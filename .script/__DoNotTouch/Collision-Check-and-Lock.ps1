@@ -67,9 +67,9 @@ git fetch --prune "$RemoteName"
 
 # ---- Helpers ----
 # タグ判定
-function Is-TagRef([string]$ref) { 
+function Is-TagRef([string]$ref) {
     # 形式が refs/tags/* ならタグ
-    return $ref -like 'refs/tags/*' 
+    return $ref -like 'refs/tags/*'
 }
 
 # 保護ブランチ判定

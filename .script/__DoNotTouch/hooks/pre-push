@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# 1. PUSH が許可されたリポジトリか検証
+exec powershell -ExecutionPolicy Bypass -NoProfile -STA -File "$(dirname "$0")/Pre-Push.ps1" "$@"
+
+# 2. 競合がないかチェックし、書き込めるならロックする（TTL=300 ... 5min）
+exec powershell -ExecutionPolicy Bypass -NoProfile -STA -File "$(dirname "$0")/Collision-Check-and-Lock.ps1" "$@"
