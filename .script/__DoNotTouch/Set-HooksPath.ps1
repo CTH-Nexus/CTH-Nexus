@@ -1,4 +1,4 @@
-# Set-HooksPath-For-Submodules.ps1
+﻿# Set-HooksPath-For-Submodules.ps1
 # 親の .script\__DoNotTouch\hooks を、親＋全サブモジュールの hooksPath に登録する
 # 実行場所: 親リポジトリのワークツリーのルート
 

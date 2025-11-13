@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # -------------------------------------------
 # Git pre-push hook (PowerShell version)
 # Git for Windows で動作する pre-push フック。

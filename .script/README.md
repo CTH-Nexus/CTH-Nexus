@@ -13,6 +13,9 @@ Convenient Scripts (For Developers)
 - `Create-BareRepos.ps1`
 - `Setup-UserSparseCheckout.ps1`
 - `Fix-Submodules.ps1`
+- `Set-HooksPath-For-Submodules.ps1`
+- `Clone-and-Initialize.ps1`
+- `Git-ConfigCheck.ps1`
 
 ## `SoftwareCheck.ps1`
 
@@ -175,4 +178,39 @@ gitlink が生成され、サブモジュールとして追跡できるように
 
 ```
 git submodule add --force R:\Submodule\Member\{USER_ID} Member/{USER_ID}
+```
+
+## `Set-HooksPath-For-Submodules.ps1`
+
+`.gitmodules` をもとにサブモジュールを走査し、そこに含まれる `.git/config` に対して `core.hooksPath` を指定する
+
+### Usage
+
+```powershell
+subst R: "\\path\\to\\your\\repository"
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Set-HooksPath-For-Submodules.ps1"
+```
+
+
+## `Clone-and-Initialize.ps1`
+
+### Usage
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Clone-and-Initialize.ps1" `
+  -rShareUNC "\\fileserver\to\R\Drive" `
+  -repoPath "R:\UsersVault\{USER_REPO}.git" `
+  -teamRepo "R:\{TEAM_REPO}.git"
+```
+
+
+## `Git-ConfigCheck.ps1`
+
+### Usage
+
+```powershell
+# DryRun で確認してから実行可能
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Git-ConfigCheck.ps1"　-DryRun
+# 本番
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Git-ConfigCheck.ps1"
 ```
