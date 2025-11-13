@@ -8,10 +8,35 @@ title: .script\README.md
 
 Convenient Scripts (For Developers)
 
+- `SoftwareCheck.ps1`
 - `Generate-Gitmodules.ps1`
 - `Create-BareRepos.ps1`
 - `Setup-UserSparseCheckout.ps1`
 - `Fix-Submodules.ps1`
+
+## `SoftwareCheck.ps1`
+
+Obsidian / PortableGit / VSCode のインストール状況を確認し、共有フォルダにある最新インストーラと比較して 未導入または旧バージョンなら更新する
+
+### Usage
+
+```powershell
+# 共有フォルダを R: に割り当て（例）
+subst R: "\\path\to\your\repository"
+
+# DryRun（インストールせず計画のみ表示）
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\SoftwareCheck.ps1" -DryRun
+
+# スクリプト実行（インストーラの置いてあるパスを手動で選択する）
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\SoftwareCheck.ps1"
+
+# スクリプト実行（引数として渡すことも可能）
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA `
+  -File ".\.script\__DoNotTouch\SoftwareCheck.ps1" `
+  -SharedFolder "R:\path\to\your\installer\folder" `
+  -DryRun
+```
+
 
 ## `Generate-Gitmodules.ps1`
 
