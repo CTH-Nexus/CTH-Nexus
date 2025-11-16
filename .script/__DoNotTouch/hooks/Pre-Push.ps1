@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#requires -Version 5.1
 # pre-push hook (PowerShell)
 # 許可されたリモートURL以外への push を禁止（Rドライブ前提）
 # ホワイトリスト中の {USER_ID} は %USERPROFILE% の末尾フォルダ名で置換
@@ -22,8 +22,8 @@ function Normalize-Url([string]$u) {
     if ([string]::IsNullOrWhiteSpace($u)) { return "" }
     $n = $u.Trim()
 
-    # file://形式を削除 → R:/repos/.. に寄せる
-    $n = $n -replace '^file://+',''
+    # file://形式を削除 → R:/repos/.. に寄せる（localhost/ も吸収）
+    $n = $n -replace '^file://(localhost/)?',''
 
     # バックスラッシュをスラッシュに統一
     $n = $n -replace '\\','/'
@@ -32,14 +32,14 @@ function Normalize-Url([string]$u) {
     $n = $n -replace '^[rR]:\\','R:/'
     $n = $n -replace '^[rR]:/','R:/'
 
-    # 末尾スラッシュは除去
-    $n = $n.TrimEnd('/')
+    # 末尾スラッシュは除去（明示的に char を渡す）
+    $n = $n.TrimEnd([char]'/')
 
     return $n
 }
 
 # --- ホワイトリスト（Rドライブのみ。UNCは不可） ---
-# {USER_ID} を USERPROFILE に基づく ID で置換
+# {USER_ID} を USERPROFILE に基づく ID で置換（正規表現は使わない）
 $allowedTemplates = @(
     'R:\UsersVault\{USER_ID}.git',
     'R:\Submodule\Member\{USER_ID}.git',
@@ -47,9 +47,9 @@ $allowedTemplates = @(
     'R:\Submodule\Shared\Project\{USER_ID}.git'
 )
 
-# 置換＋正規化
+# 置換＋正規化（$ を含む USER_ID でも安全）
 $allowedNormalized = foreach ($t in $allowedTemplates) {
-    $path = $t -replace '\{USER_ID\}', [Regex]::Escape($USER_ID)
+    $path = $t.Replace('{USER_ID}', $USER_ID)
     Normalize-Url $path
 }
 
@@ -76,4 +76,3 @@ if (-not $allowed) {
 }
 
 Write-Host ("OK: 許可されたリモートへの push [{0}] を継続します。" -f $RemoteUrl) -ForegroundColor Green
-exit 0

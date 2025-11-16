@@ -16,6 +16,7 @@ Convenient Scripts (For Developers)
 - `Set-HooksPath-For-Submodules.ps1`
 - `Clone-and-Initialize.ps1`
 - `Git-ConfigCheck.ps1`
+- `Setup-Obsidian.ps1`
 
 ## `SoftwareCheck.ps1`
 
@@ -213,4 +214,19 @@ powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotT
 powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Git-ConfigCheck.ps1"　-DryRun
 # 本番
 powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Git-ConfigCheck.ps1"
+```
+
+## `Setup-Obsidian.ps1`
+
+`.env.example` を参考に、`.env` を作成してから実行する
+
+`PLUGINS_SOURCE_DIR` を、共有フォルダ上のプラグイン置き場に指定する
+
+### Usage
+
+```powershell
+# DryRun で確認してから実行可能
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Setup-Obsidian.ps1"　-DryRun
+# 本番
+powershell.exe -ExecutionPolicy Bypass -NoProfile -STA -File ".\.script\__DoNotTouch\Setup-Obsidian.ps1" -y
 ```

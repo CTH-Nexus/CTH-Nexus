@@ -1,4 +1,4 @@
-Write-Host "Starting submodule registration..."
+﻿Write-Host "Starting submodule registration..."
 Write-Host "Rule: Skipping all paths under 'Member/'."
 
 # 1. Get all submodule 'keys' defined in .gitmodules
@@ -18,7 +18,7 @@ if ($null -eq $submoduleKeys) {
 # 2. Loop through the list of retrieved keys
 foreach ($key in $submoduleKeys) {
 
-    # 3. Extract the submodule name (e.g., "Shared/User/A1253419") from the key
+    # 3. Extract the submodule name (e.g., "Shared/User/{USER_ID}") from the key
     $name = $key -replace "^submodule\.", "" -replace "\.path$", ""
 
     Write-Host "" # Newline
@@ -51,7 +51,8 @@ foreach ($key in $submoduleKeys) {
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to add submodule '$name' (Path: $path)"
-    } else {
+    }
+    else {
         Write-Host "Successfully registered '$name'."
     }
 }

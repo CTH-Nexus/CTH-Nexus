@@ -154,6 +154,7 @@ foreach ($ID in $IDs) {
         # Build the new content block
         $URL = "${BaseDriveLetter}:/Submodule/$Path.git" # Using your specific URL format
 
+
         $NewEntry = @(
             "", # Start with a blank line for separation
             "[submodule `"$Path`"]",
