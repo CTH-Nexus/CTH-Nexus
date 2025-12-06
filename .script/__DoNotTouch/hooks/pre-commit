@@ -1,0 +1,115 @@
+#!/usr/bin/env sh
+# .script/__DoNotTouch/hooks/pre-commit
+# 親と子で共通。子では commit-submodules.sh だけスキップし、他のステップは続行。
+
+set -eu
+
+# --- logging ---
+log_cli() {
+  ts="$(date '+%Y-%m-%d %H:%M:%S')"
+  printf '[pre-commit] %s %s\n' "$ts" "$*" 1>&2
+}
+err() {
+  printf '[pre-commit] %s\n' "$*" 1>&2
+}
+
+log_cli "DEBUG: \$0 is $0"
+log_cli "DEBUG: pwd is $(pwd)"
+
+# --- PortableGit優先（なければ PATH の git） ---
+USERPROFILE="${USERPROFILE:-}"
+HOME_DIR="${HOME:-}"
+
+BASE_DIR=""
+if [ -n "$USERPROFILE" ]; then
+  BASE_DIR="$(printf '%s' "$USERPROFILE" | sed 's#\\#/#g')"
+elif [ -n "$HOME_DIR" ]; then
+  BASE_DIR="$(printf '%s' "$HOME_DIR" | sed 's#\\#/#g')"
+fi
+
+PGIT_CANDIDATE=""
+[ -n "$BASE_DIR" ] && PGIT_CANDIDATE="$BASE_DIR/Software/PortableGit/cmd/git.exe"
+
+GIT_EXE=""
+if [ -n "$PGIT_CANDIDATE" ] && [ -f "$PGIT_CANDIDATE" ]; then
+  GIT_EXE="$PGIT_CANDIDATE"
+elif command -v git >/dev/null 2>&1; then
+  GIT_EXE="$(command -v git)"
+else
+  err "[error] git.exe not found (expected $BASE_DIR/Software/PortableGit/cmd/git.exe or PATH). Aborting."
+  exit 1
+fi
+
+printf '[pre-commit] %s\n' "GIT_EXE resolved to: $GIT_EXE" 1>&2
+
+# --- 親/子ルート決定（指定ロジック厳守） ---
+SUPER="$($GIT_EXE rev-parse --show-superproject-working-tree 2>/dev/null || true)"
+TOP="$($GIT_EXE rev-parse --show-toplevel 2>/dev/null || true)"
+ROOT="${SUPER:-$TOP}"
+hook_dir="$ROOT/.script/__DoNotTouch/hooks"
+cd "$ROOT"
+log_cli "ROOT is $ROOT"
+log_cli "hook_dir is $hook_dir"
+
+# 子（サブモジュール内）かどうか：出力の有無で判定
+is_submodule_worktree=0
+SUPER_OUT="$($GIT_EXE rev-parse --show-superproject-working-tree 2>/dev/null || true)"
+if [ -n "$SUPER_OUT" ]; then
+  is_submodule_worktree=1
+  log_cli "Detected submodule worktree; will skip parent-only orchestration (commit-submodules.sh) but continue other steps."
+fi
+
+# --- (1) 画像ステップ（親・子共通で実行） ---
+image_method="$hook_dir/handle-images.sh"
+if [ ! -f "$image_method" ]; then
+  log_cli "ERROR: handle-images.sh not found at $image_method. Aborting."
+  exit 1
+fi
+
+log_cli "Run handle-images.sh: $image_method"
+sh "$image_method" "$GIT_EXE" || {
+  log_cli "ERROR: handle-images.sh failed. Aborting."
+  exit 1
+}
+log_cli "handle-images.sh finished"
+
+# --- (2) 親専用：commit-submodules.sh を呼ぶ（hook_dir 決め打ち） ---
+if [ "$is_submodule_worktree" -eq 0 ]; then
+  method_script="$hook_dir/commit-submodules.sh"
+  if [ ! -f "$method_script" ]; then
+    log_cli "ERROR: commit-submodules.sh not found at $method_script. Aborting."
+    exit 1
+  fi
+
+  log_cli "Run commit-submodules.sh: $method_script"
+  sh "$method_script" "$GIT_EXE" || {
+    log_cli "ERROR: commit-submodules.sh failed. Aborting."
+    exit 1
+  }
+  log_cli "commit-submodules.sh finished."
+else
+  log_cli "Skip commit-submodules.sh (submodule worktree)."
+fi
+
+# --- (3) 親専用: upstream pull step （オリジナルと同期させる）---
+# if [ "$is_submodule_worktree" -eq 0 ]; then
+#   pull_upstream="$hook_dir/sync-original.sh"
+#   if [ -f "$pull_upstream" ]; then
+#     log_cli "Run sync-original.sh: $pull_upstream"
+#     sh "$pull_upstream" "$GIT_EXE" || log_cli "WARN: sync-original.sh returned non-zero; continuing."
+#     log_cli "sync-original.sh finished (pre-commit continues regardless)."
+#   else
+#     log_cli "WARN: sync-original.sh not found at $pull_upstream. Skipped."
+#   fi
+# else
+#   log_cli "Skip sync-original.sh (submodule worktree)."
+# fi
+
+# --- (x) 他ステップをここに追記可能（直列/必要に応じて） ---
+# 例：
+# other="$hook_dir/Another-Step.ps1"
+# [ -f "$other" ] && powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -STA -File "$other" "$@" || {
+#   log_cli "ERROR: Another-Step.ps1 failed."; exit 1; }
+
+# 正常終了 → 親コミット作成（gitlink を含む）
+exit 0

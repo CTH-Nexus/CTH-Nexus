@@ -1,0 +1,39 @@
+#!/bin/sh
+# - サブモジュールでも「フック置き場」からの相対で PS1 を起動
+# - PowerShell 7 (pwsh) を優先、無ければ Windows PowerShell (powershell)
+# - Windows PowerShell のみ -STA を付与
+# - 最後の処理のみ exec でプロセス置換し、終了コードを確実に Git へ返す
+
+set -eu
+
+# このシェル自身があるディレクトリ（core.hooksPath 直下）
+hook_dir="$(dirname "$0")"
+script="$hook_dir/Pre-Push.ps1"
+lock_script="$hook_dir/Collision-Check-and-Lock.ps1"
+
+# PowerShell 7 を最優先
+if command -v pwsh >/dev/null 2>&1; then
+  # 1. PUSH が許可されたリポジトリか検証
+  pwsh -NoLogo -NoProfile -File "$script" "$@"
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    # 検証で失敗したら即終了（この終了コードが Git に返る）
+    exit $rc
+  fi
+  # 2. 競合チェック＆ロック（TTL=300）
+  exec pwsh -NoLogo -NoProfile -File "$lock_script" "$@"
+fi
+
+# 次点で Windows PowerShell（-STA 使用可）
+if command -v powershell >/dev/null 2>&1; then
+  powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -STA -File "$script" "$@"
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    exit $rc
+  fi
+  exec powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -STA -File "$lock_script" "$@"
+fi
+
+# どちらも無い場合は失敗
+echo "[pre-push] ERROR: Neither 'pwsh' nor 'powershell' was found in PATH." >&2
+exit 127

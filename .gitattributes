@@ -1,0 +1,140 @@
+# --- テキストファイルは LF に統一 ---
+*.md     text eol=lf
+*.txt    text eol=lf
+*.json   text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.csv    text eol=lf
+*.tsv    text eol=lf
+*.xml    text eol=lf
+*.ini    text eol=lf
+*.conf   text eol=lf
+*.toml   text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.ts     text eol=lf
+*.py     text eol=lf
+*.sh     text eol=lf
+*.eml    text eol=lf
+*.srt    text eol=lf
+*.vtt    text eol=lf
+.gitignore text eol=lf
+.gitmodules text eol=lf
+.gitattributes text eol=lf
+
+# --- CRLF が必須なファイル（例外） ---
+*.bat    text eol=crlf
+
+# --- バイナリファイル（diff 無効化） ---
+# 画像・動画・音声・Office・圧縮・VM・DB・PCAP・ログなど
+*.jpg    binary
+*.jpeg   binary
+*.png    binary
+*.gif    binary
+*.svg    binary
+*.avif   binary
+*.webp   binary
+*.heic   binary
+*.heif   binary
+*.raw    binary
+*.tif    binary
+*.tiff   binary
+*.nef    binary
+*.cr2    binary
+*.cr3    binary
+*.arw    binary
+*.raf    binary
+*.orf    binary
+*.dng    binary
+*.pdf    binary
+*.doc    binary
+*.docx   binary
+*.xls    binary
+*.xlsx   binary
+*.ppt    binary
+*.pptx   binary
+*.mp4    binary
+*.mov    binary
+*.avi    binary
+*.mkv    binary
+*.webm   binary
+*.flv    binary
+*.wmv    binary
+*.mp3    binary
+*.wav    binary
+*.aac    binary
+*.flac   binary
+*.ogg    binary
+*.stl    binary
+*.obj    binary
+*.fbx    binary
+*.blend  binary
+*.psd    binary
+*.ai     binary
+*.eps    binary
+*.indd   binary
+*.ttf    binary
+*.otf    binary
+*.woff   binary
+*.woff2  binary
+*.zip    binary
+*.tar    binary
+*.gz     binary
+*.bz2    binary
+*.xz     binary
+*.7z     binary
+*.rar    binary
+*.zst    binary
+*.iso    binary
+*.img    binary
+*.dmg    binary
+*.vmdk   binary
+*.vdi    binary
+*.vhd    binary
+*.vhdx   binary
+*.ova    binary
+*.ovf    binary
+*.qcow2  binary
+*.cow    binary
+*.sqlite binary
+*.db     binary
+*.mdb    binary
+*.accdb  binary
+*.bak    binary
+*.dump   binary
+*.pcap   binary
+*.pcapng binary
+*.log    binary
+*.tmp    binary
+*.temp   binary
+*.swp    binary
+*.swo    binary
+*.lock   binary
+*.cache  binary
+Thumbs.db binary
+desktop.ini binary
+
+# --- Merge Strategy ---
+# --> .git/config に `[merge "xxx"]` セクションを書き込むことで設定が有効化
+# === ローカル（自分側）を常に採用 ==================
+MyWork/* merge=ours
+Shared/User/* merge=ours
+Shared/Project/* merge=ours
+# === upstream（相手側）を常に採用 ==============
+LICENSE merge=theirs
+README.md merge=theirs
+.env.example merge=theirs
+.gitignore merge=theirs
+.gitmodules merge=theirs
+.gitattributes merge=theirs
+.obsidian merge=theirs
+# --- * (wildcard) によるフォルダ指定
+__Attachment/* merge=theirs
+__Document/* merge=theirs
+__Template/* merge=theirs
+.script/* merge=theirs
+# --- 拡張子によるファイル指定
+*.ps1 merge=theirs
+*.sh  merge=theirs
+# =====================================
